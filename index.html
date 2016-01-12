@@ -1,42 +1,48 @@
 <!DOCTYPE HTML>
 <html>
-  <head>
+<head>
     <style>
-      body {
-        margin: 0px;
-        padding: 0px;
-      }
+        body {
+            margin: 0px;
+            padding: 0px;
+        }
     </style>
-  </head>
-  <body >
-    <select id = "program">
-  <option>MAZE</option>
-  <option>KALEID</option>
-  <option>GUESS</option>
-  <option>MISSILE</option>
-</select><button onclick="loadRom()">Load</button><button id = "play" onclick="play()" disabled>Play</button><button id = "pause" onclick="pause()" disabled>Pause</button><button onclick="reset()">Reset</button><button onclick="loop()">Step</button><br>
+</head>
+<body>
+<select id="program">
+    <option>MAZE</option>
+    <option>KALEID</option>
+    <option>GUESS</option>
+    <option>MISSILE</option>
+</select>
+<button onclick="loadRom()">Load</button>
+<button id="play" onclick="play()" disabled>Play</button>
+<button id="pause" onclick="pause()" disabled>Pause</button>
+<button onclick="reset()">Reset</button>
+<button onclick="loop()">Step</button>
+<br>
 
 
-    <canvas id="chip8" width="640" height="320"></canvas>
+<canvas id="chip8" width="640" height="320"></canvas>
 
 
-<div id = "debug">
-<div style="float:left;width:200px;">
-    <div>
-    I: <span id = "iReg"></span><br>
-    DelayTimer: <span id = "delayTimer"></span><br>
-    SoundTimer: <span id = "soundTimer"></span><br>
-    PC: <span id = "pcReg"></span><br>
-    SP: <span id = "spReg"></span><br>
+<div id="debug">
+    <div style="float:left;width:200px;">
+        <div>
+            I: <span id="iReg"></span><br>
+            DelayTimer: <span id="delayTimer"></span><br>
+            SoundTimer: <span id="soundTimer"></span><br>
+            PC: <span id="pcReg"></span><br>
+            SP: <span id="spReg"></span><br>
+        </div>
+
+        <div id="reg"></div>
     </div>
-
-<div id = "reg"></div>
-</div>
-<div style="float:left;width:200px;">
-<textarea id = "rom" cols = "57" rows="20"></textarea>
-</div>
+    <div style="float:left;width:200px;">
+        <textarea id="rom" cols="57" rows="20"></textarea>
+    </div>
 </div>
 
-    <script src = "cpu.js"></script>
-  </body>
+<script src="cpu.js"></script>
+</body>
 </html>      
