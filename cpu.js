@@ -495,7 +495,7 @@ function debug() {
     document.getElementById("iReg").innerHTML = dec2hex(I);
     document.getElementById("delayTimer").innerHTML = dt;
     document.getElementById("soundTimer").innerHTML = st;
-    document.getElementById("pcReg").innerHTML = dec2hex(pc);
+    document.getElementById("pcReg").innerHTML = dec2hex(pc)+" ("+dec2hex(mem[pc] << 8 | mem[pc + 1])+")";
     document.getElementById("spReg").innerHTML = sp;
     document.getElementById("reg").innerHTML = "";
     for (var i = 0; i < 16; i++) {
