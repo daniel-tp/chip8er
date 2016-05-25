@@ -64,6 +64,7 @@ var roms = [
 function reset() {
     clearInterval(interval);
     document.getElementById("play").disabled = true;
+
     mem = [ //add font
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -82,7 +83,9 @@ function reset() {
         0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
         0xF0, 0x80, 0xF0, 0x80, 0x80 // F
     ];
-
+    for(var i = 0x200; i<4096;i++){
+        mem[i]=0;
+    }
     gfx = new Array(64);
     for (var x = 0; x < 64; x++) {
         gfx[x] = new Array(32);
@@ -367,6 +370,7 @@ function cycle() {
                     break;
                 case 0x000A: //Fx0A
                     //Wait for a key press, store the value of the key in Vx.
+
                     break;
 
                 case 0x0015: //Fx15
@@ -398,15 +402,20 @@ function cycle() {
 
                 case 0x0033: //Fx33
                     //Store BCD representation of Vx in memory locations I, I+1, and I+2.
-                    mem[I] = v[xCode].toString()[0];
-                    mem[I + 1] = v[xCode].toString()[1];
-                    mem[I + 2] = v[xCode].toString()[2];
+                    //console.log("Storing BCD: " + v[xCode].toString()[0] + ", " + v[xCode].toString()[1] + ", " + v[xCode].toString()[2])
+                    var num = v[xCode].toString();
+                    for(var strLen = num.length;strLen>0;strLen--){
+                        mem[I+3-strLen] = num[0]; //strLen = 2, I+3
+                        console.log(num[0]+" put in "+parseInt(I+3-strLen));
+                        num = num.slice(1);
+                    }
+
                     pc += 2;
                     break;
 
                 case 0x0055: //Fx55
                     //Store registers V0 through Vx in memory starting at location I.
-                    console.log("Storing V0 to V" + xCode);
+                    console.log("Storing V0 through V" + xCode);
                     for (var x = 0; x < (xCode); x++) {
                         mem[I + x] = v[x];
                     }
@@ -415,8 +424,8 @@ function cycle() {
 
                 case 0x0065: //Fx65
                     //Read registers V0 through Vx from memory starting at location I.
-                    console.log("Reading V0 to V" + xCode);
-                    for (var x = 0; x < (xCode); x++) {
+                    console.log("Reading V0 through V" + xCode);
+                    for (var x = 0; x <= (xCode); x++) {
                         v[x] = mem[I + x];
                     }
                     pc += 2;
@@ -527,7 +536,7 @@ function pause() {
 }
 
 function debug() {
-    document.getElementById("iReg").innerHTML = dec2hex(I);
+    document.getElementById("iReg").innerHTML = dec2hex(I) + " (" + I + ")";
     document.getElementById("delayTimer").innerHTML = dt;
     document.getElementById("soundTimer").innerHTML = st;
     document.getElementById("pcReg").innerHTML = dec2hex(pc)+" ("+dec2hex(mem[pc] << 8 | mem[pc + 1])+")";
