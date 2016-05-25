@@ -34,6 +34,33 @@ var keyMap = {
     67: 0xF,
     86: 0x10
 };
+
+var roms = [
+        "15PUZZLE",
+        "BLINKY",
+        "BLITZ",
+        "BRIX",
+        "CONNECT4",
+        "GUESS",
+        "HIDDEN",
+        "INVADERS",
+        "KALEID",
+        "MAZE",
+        "MERLIN",
+        "MISSILE",
+        "PONG",
+        "PONG2",
+        "PUZZLE",
+        "SYZYGY",
+        "TANK",
+        "TETRIS",
+        "TICTAC",
+        "UFO",
+        "VBRIX",
+        "VERS",
+        "WIPEOFF",
+        "RANDOM"
+        ]
 function reset() {
     clearInterval(interval);
     document.getElementById("play").disabled = true;
@@ -80,9 +107,7 @@ function reset() {
     debug();
 }
 //TODO:
-//Do display
-//Do debug system (print out values of memory and registers, and counters)
-//DO sound (just can be a beep in an audio tag)
+//Do sound (just can be a beep in an audio tag)
 //finish remaining opcodes
 //split graphics into another file?
 //do font.
@@ -408,6 +433,16 @@ function getSelected() {
     var select = document.getElementById("program");
     return select.options[select.selectedIndex].text;
 }
+
+function setRomList(){
+    var programSelect = document.getElementById("program");
+    roms.forEach(function(entry){
+        var option = document.createElement("option");
+        option.text = entry;
+        programSelect.add(option);
+    });
+
+}
 var romLength = 0;
 
 function loadRom() {
@@ -514,6 +549,7 @@ function play() {
     document.getElementById("play").disabled = true;
     document.getElementById("pause").disabled = false;
 }
+setRomList();
 loadRom();
 
 //var interval = setInterval(loop, 1000 / 60);
