@@ -12,19 +12,27 @@
 
 <select id="program">
 </select>
+<button onclick="loadLocalRom()">Load From List</button>
+<br>
+<input type="file" id="romUpload">
+<button onclick="loadRemoteRom(document.getElementById('romUpload').files[0])">Load From Upload</button>
+<br>
 
-<button onclick="loadRom()">Load</button>
 <button id="play" onclick="play()" disabled>Play</button>
 <button id="pause" onclick="pause()" disabled>Pause</button>
+<button id="restart" onclick="restart()" disabled>Restart</button>
+<button id="reload" onclick="reloadRom()" disabled>Reload</button>
 <button onclick="reset()">Reset</button>
 <button onclick="loop()">Step</button>
+
 <br>
 
 
 <canvas id="chip8" width="640" height="320"></canvas>
 
-
+<br>FPS:<input id="fps" type="number" value="60" style="width:50px;"/>
 <div id="debug">
+
     <div style="float:left;width:200px;">
         <div>
             I: <span id="iReg"></span><br>

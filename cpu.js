@@ -2,7 +2,7 @@
 var canvas = document.getElementById('chip8');
 var ctx = canvas.getContext('2d');
 
-var mem, v, I, dt, st, pc, sp, stack, keys, gfx, drawFlag, interval;
+var mem, v, I, dt, st, pc, sp, stack, keys, gfx, drawFlag, interval, currentRom;
 // var mem = []; //4mb of memory
 // var v = []; //16 registers, V0 to VF. VF is used for carry flag.
 // var I = 0; //index, defaults 0. (why was this null?)
@@ -34,7 +34,6 @@ var keyMap = {
     67: 0xF,
     86: 0x10
 };
-
 var roms = [
         "15PUZZLE",
         "BLINKY",
@@ -60,11 +59,13 @@ var roms = [
         "VERS",
         "WIPEOFF",
         "RANDOM"
-        ]
+];
 function reset() {
     clearInterval(interval);
     document.getElementById("play").disabled = true;
-
+    document.getElementById("pause").disabled = true;
+    document.getElementById("reload").disabled = true;
+    document.getElementById("restart").disabled = true;
     mem = [ //add font
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -112,6 +113,7 @@ function reset() {
 //TODO:
 //Do sound (just can be a beep in an audio tag)
 //finish remaining opcodes
+//fix delay timer
 //split graphics into another file?
 //do font.
 //do key input
@@ -435,6 +437,7 @@ function cycle() {
 
 
 }
+
 //get opcode
 //find  meaning
 //execute meaning
@@ -442,7 +445,18 @@ function getSelected() {
     var select = document.getElementById("program");
     return select.options[select.selectedIndex].text;
 }
+function loadRemoteRom(file) {
 
+    var reader = new FileReader();
+
+    reader.onload = function (e) {
+        var rom = new Uint8Array(reader.result);
+        loadRom(rom)
+    };
+
+    reader.readAsArrayBuffer(file);
+    console.log(file);
+}
 function setRomList(){
     var programSelect = document.getElementById("program");
     roms.forEach(function(entry){
@@ -454,29 +468,35 @@ function setRomList(){
 }
 var romLength = 0;
 
-function loadRom() {
+function loadLocalRom() {
     // Load a rom.
-
-    reset();
-    document.getElementById("play").disabled = true;
     var xhr = new XMLHttpRequest;
     xhr.open("GET", "roms/" + getSelected(), true);
     xhr.responseType = "arraybuffer";
     xhr.onload = function () {
         var rom = new Uint8Array(xhr.response);
-        console.log(rom.length);
-        romLength = rom.length;
-        for (var i = 0, len = rom.length; i < len; i++) {
-            mem[0x200 + i] = rom[i];
-        }
-
-        console.log("Loaded");
-        debug();
-        document.getElementById("play").disabled = false;
+        loadRom(rom)
     };
     xhr.send();
 }
-
+function reloadRom() {
+    loadRom(currentRom);
+}
+function loadRom(rom) {
+    reset();
+    document.getElementById("play").disabled = true;
+    currentRom = rom;
+    console.log(rom.length);
+    romLength = rom.length;
+    for (var i = 0, len = rom.length; i < len; i++) {
+        mem[0x200 + i] = rom[i];
+    }
+    console.log("Loaded");
+    debug();
+    document.getElementById("play").disabled = false;
+    document.getElementById("reload").disabled = false;
+    document.getElementById("restart").disabled = false;
+}
 function draw() { //should have debug on side of screen.
     console.log("drawing");
     canvas.width = canvas.width; //clears canvas
@@ -526,8 +546,10 @@ function onKeyDown(event) {
 }
 function setFPS(set) { // will be used.
     fps = set;
-    clearInterval(interval);
-    interval = setInterval(loop, 1000 / fps);
+    if (document.getElementById("play").disabled) {
+        clearInterval(interval);
+        interval = setInterval(loop, 1000 / fps);
+    }
 }
 function pause() {
     clearInterval(interval);
@@ -551,14 +573,21 @@ function debug() {
     }
 
 }
-
+function restart() {
+    reloadRom();
+    play();
+}
 function play() {
     interval = setInterval(loop, 1000 / fps);
     draw(); //60fps. Double check if cycling should actually be at 60hz, or just timers.
     document.getElementById("play").disabled = true;
+
     document.getElementById("pause").disabled = false;
 }
+document.getElementById("fps").addEventListener("input", function (e) {
+    setFPS(document.getElementById("fps").value);
+});
 setRomList();
-loadRom();
+loadLocalRom();
 
 //var interval = setInterval(loop, 1000 / 60);
