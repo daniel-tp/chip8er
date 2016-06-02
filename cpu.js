@@ -2,39 +2,31 @@
 var canvas = document.getElementById('chip8');
 var ctx = canvas.getContext('2d');
 
-var mem, v, I, dt, st, pc, sp, stack, keys, gfx, drawFlag, interval, currentRom;
-// var mem = []; //4mb of memory
-// var v = []; //16 registers, V0 to VF. VF is used for carry flag.
-// var I = 0; //index, defaults 0. (why was this null?)
-// var dt = 0; //delay timer, counts down to 0 at 60hz
-// var st = 0; //sound timer, counts down to 0 at 60hz, plays buzzer when NOT 0. (check specification)
-// var pc = 0x200; //program counter, set to current place in program. Starts at 0x200
-// var sp = 0; //stack pointer
-// var stack = [] //stack pointer is 16 long. May not matter what it is set to?
-// var keys = [] //what keys have been pressed.
-// var gfx; //array is 64 x 32. 2048 gfx[x][y]
-// var drawFlag;
-// var interval;
+var mem, v, I, dt, st, pc, sp, stack, gfx, drawFlag, interval, currentRom;
 var fps = 60;
+var keys = {};
 var keyMap = {
     49: 0x1,
     50: 0x2,
     51: 0x3,
     52: 0x4,
-    81: 0x5,
-    87: 0x6,
-    69: 0x7,
-    82: 0x8,
-    65: 0x9,
-    83: 0xA,
-    68: 0xB,
-    70: 0xC,
-    90: 0xD,
-    88: 0xE,
-    67: 0xF,
-    86: 0x10
+    53: 0x5,
+    54: 0x6,
+    55: 0x7,
+    56: 0x8,
+    57: 0x9,
+    97: 0xA,
+    98: 0xB,
+    99: 0xC,
+    100: 0xD,
+    101: 0xE,
+    102: 0xF,
+    48: 0x10
 };
 var roms = [
+    "KEYTEST",
+    "RANDOM",
+    "MAZE",
         "15PUZZLE",
         "BLINKY",
         "BLITZ",
@@ -44,7 +36,6 @@ var roms = [
         "HIDDEN",
         "INVADERS",
         "KALEID",
-        "MAZE",
         "MERLIN",
         "MISSILE",
         "PONG",
@@ -57,8 +48,7 @@ var roms = [
         "UFO",
         "VBRIX",
         "VERS",
-        "WIPEOFF",
-        "RANDOM"
+    "WIPEOFF"
 ];
 function reset() {
     clearInterval(interval);
@@ -131,11 +121,12 @@ function cycle() {
     var xCode = (opcode & 0x0F00) >> 8;
     var yCode = (opcode & 0x00F0) >> 4;
     console.log(xCode + ":" + yCode);
+    dt = dt > 0 ? dt - 1 : dt;
     switch (nibble) {
 
         case 0x0000:
             switch (opcode & 0x000F) { // 2 opcodes that start with 0, 0nnn can be ignored.
-                case 0x0000: //clear the screen
+                case 0x0000: //clear the screen 00E0
                     console.log("Clear Display");
                     for (var count = 0; count < 64; count++) {
                         gfx[count] = new Array(32);
@@ -146,8 +137,13 @@ function cycle() {
                     break;
                 case 0x000E: //00EE
                     //Return from a subroutine
-                    console.log("Returning from subroutine to: " + dec2hex(stack[sp]));
-                    pc = stack[sp -= 1];
+                    console.log("Stack: " + stack[sp - 1] + " at sp: " + sp);
+                    console.log("Returning from subroutine to: " + dec2hex(stack[sp - 1]));
+
+                    pc = stack[sp - 1];
+                    sp--;
+                    console.log(stack + " SP: " + sp);
+                //sp--;
                 //sets PC from top of stack, then sp-=1
                 //The interpreter sets the program counter to the
                 //address at the top of the stack, then subtracts 1 from the stack pointer.
@@ -159,10 +155,12 @@ function cycle() {
             break;
         case 0x2000: //2nnn
             console.log("Calling subroutine at: " + dec2hex(opcode & 0x0FFF));
+            console.log("Storing positon: " + dec2hex(pc));
 
             stack[sp] = pc;
             sp++;
             pc = opcode & 0x0FFF;
+            console.log(stack + " SP: " + sp);
             //increment stack pointer, put current PC on top of stack, then change PC to nnn
             break;
         case 0x3000: //3xkk
@@ -274,9 +272,12 @@ function cycle() {
                     break;
                 case 0x000E: //8xyE
                     ////Set Vx = Vx SHL 1.
-                    //var MSB = v[xCode] >> (sizeof(v[xCode]) * 8 - 1) & 1;
-                    //v[0xF] = MSB;
-                    //v[xCode] <<= 1;
+                    var MSB = (v[xCode] & 0xFF) >> 7;
+                    v[0xF] = MSB;
+                    v[xCode] <<= 1;
+                    if (v[xCode] > 255) {
+                        v[xCode] -= 256;
+                    }
                     //break;
             }
             pc += 2;
@@ -343,17 +344,18 @@ function cycle() {
                 case 0x000E: //Ex9E
                     //Skip next instruction if key with the value of Vx is pressed.
                     console.log("Checking for key " + dec2hex(v[xCode]));
-                    if (keys.indexOf(v[xCode]) > -1) {
+                    if (keys[v[xCode]]) {
                         pc += 4;
                         console.log("Key Found");
                     } else {
                         pc += 2
                     }
+
                     break;
                 case 0x0001: //ExA1
                     //Skip next instruction if key with the value of Vx is NOT pressed.
                     console.log("Checking for not key " + dec2hex(v[xCode]));
-                    if (keys.indexOf(v[xCode]) == -1) {
+                    if (!keys[v[xCode]]) {
                         pc += 4;
                         console.log("Key Not Found");
                     } else {
@@ -434,8 +436,6 @@ function cycle() {
                     break;
             }
     }
-
-
 }
 
 //get opcode
@@ -499,7 +499,7 @@ function loadRom(rom) {
 }
 function draw() { //should have debug on side of screen.
     console.log("drawing");
-    canvas.width = canvas.width; //clears canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height); //clears canvas
     for (var x = 0; x < 64; x++) {
         for (var y = 0; y < 32; y++) {
             if (gfx[x][y] == 1) {
@@ -527,11 +527,18 @@ function setPixel(x, y) {
 }
 
 function dec2hex(i) {
-    return "0x" + (i + 0x10000).toString(16).substr(-4).toUpperCase();
-} //add another that just has decimal?
+
+    return "0x" + (i + 0x100000).toString(16).substr(-4).toUpperCase();
+}
+function dec2hexShort(i) {
+
+    return "0x" + (i + 0x1000).toString(16).substr(-2).toUpperCase();
+}//add another that just has decimal?
 function loop() { //should be infinite.
+
+
     cycle();
-    keys = [];
+
     debug();
     if (drawFlag) {
         drawFlag = false;
@@ -539,10 +546,17 @@ function loop() { //should be infinite.
     }
 }
 
-window.addEventListener("keypress", onKeyDown, false);
-
+document.addEventListener("keydown", onKeyDown, false);
+document.addEventListener("keyup", onKeyUp, false);
 function onKeyDown(event) {
-    keys.push(keyMap[event.keyCode]); // maybe make keys object
+    console.log(event.keyCode + " : " + keyMap[event.keyCode]);
+    keys[keyMap[event.keyCode]] = true;
+    console.log(keys);
+}
+function onKeyUp(event) {
+    console.log(event.keyCode + " : " + keyMap[event.keyCode]);
+    keys[keyMap[event.keyCode]] = false;
+    console.log(keys);
 }
 function setFPS(set) { // will be used.
     fps = set;
@@ -567,11 +581,12 @@ function debug() {
     for (var i = 0; i < 16; i++) {
         document.getElementById("reg").innerHTML += "V" + i + ": " + dec2hex(v[i]) + " (" + v[i] + ")<br>";
     }
-    document.getElementById("rom").value = "";
-    for (var i = 0; i < romLength; i += 2) {
-        document.getElementById("rom").value += dec2hex(mem[0x200 + i] << 8 | mem[0x200 + i + 1]) + " ";
+    document.getElementById("rom").innerHTML = "";
+    var memDebug = "";
+    for (var i = 0x200; i < mem.length; i++) {
+        memDebug += dec2hex(i) + ": " + dec2hexShort(mem[i]) + "<br>";
     }
-
+    //document.getElementById("rom").innerHTML=memDebug;
 }
 function restart() {
     reloadRom();
