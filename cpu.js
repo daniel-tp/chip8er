@@ -5,6 +5,8 @@ var ctx = canvas.getContext('2d');
 var mem, v, I, dt, st, pc, sp, stack, gfx, drawFlag, interval, currentRom;
 var fps = 60;
 var keys = {};
+var audioctx = new AudioContext;
+
 var keyMap = {
     49: 0x1,
     50: 0x2,
@@ -122,6 +124,7 @@ function cycle() {
     var yCode = (opcode & 0x00F0) >> 4;
     console.log(xCode + ":" + yCode);
     dt = dt > 0 ? dt - 1 : dt;
+    st = st > 0 ? st - 1 : st;
     switch (nibble) {
 
         case 0x0000:
@@ -374,7 +377,8 @@ function cycle() {
                     break;
                 case 0x000A: //Fx0A
                     //Wait for a key press, store the value of the key in Vx.
-
+                    console.log("Supposed to pause and wait for key input");
+                    pause();
                     break;
 
                 case 0x0015: //Fx15
@@ -544,6 +548,10 @@ function loop() { //should be infinite.
         drawFlag = false;
         draw();
     }
+    if (st > 0) {
+        beep();
+    } else {
+    }
 }
 
 document.addEventListener("keydown", onKeyDown, false);
@@ -557,6 +565,18 @@ function onKeyUp(event) {
     console.log(event.keyCode + " : " + keyMap[event.keyCode]);
     keys[keyMap[event.keyCode]] = false;
     console.log(keys);
+}
+
+function beep() {
+    var oscillator = audioctx.createOscillator();
+    oscillator.frequency.value = 400;
+
+    oscillator.connect(audioctx.destination);
+
+    oscillator.start(0);
+    setTimeout(function () {
+        oscillator.stop()
+    }, 150);
 }
 function setFPS(set) { // will be used.
     fps = set;
