@@ -97,22 +97,16 @@ function reset() {
     sp = 0;
     stack = [];
     keys = [];
-    canvas.width = canvas.width; //Clears itself.
+    ctx.clearRect(0, 0, canvas.width, canvas.height); //Clears itself.
     drawFlag = false;
     romLength = 0;
     debug();
 }
 //TODO:
-//Do sound (just can be a beep in an audio tag)
 //finish remaining opcodes
-//fix delay timer
 //split graphics into another file?
-//do font.
 //do key input
-//get stack working
-//ROM selection
-
-//if true, update display? 
+//get stack working (maybe still not working)
 
 function cycle() {
     var opcode = mem[pc] << 8 | mem[pc + 1];
